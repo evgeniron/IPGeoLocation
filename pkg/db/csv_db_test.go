@@ -1,13 +1,13 @@
 package db
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
-	"fmt"
 )
 
-/* Test new CSV database instance with correct DB_PATH environment variable */ 
+/* Test new CSV database instance with correct DB_PATH environment variable */
 func TestNewCsvDatabaseWithPathEnv(t *testing.T) {
 	os.Setenv("DB_PATH", "geo_db.csv")
 	defer os.Unsetenv("DB_PATH")
@@ -15,7 +15,7 @@ func TestNewCsvDatabaseWithPathEnv(t *testing.T) {
 	fmt.Println(csvDb.GetLocation("1.2.3.4"))
 }
 
-/* Test new CSV database instance without DB_PATH environment variable - expect a failure */ 
+/* Test new CSV database instance without DB_PATH environment variable - expect a failure */
 func TestNewCsvDBWithoutPathEnv(t *testing.T) {
 	if os.Getenv("UT_DB_PATH_EMPTY") == "1" {
 		csvDb := NewCsvDb()
