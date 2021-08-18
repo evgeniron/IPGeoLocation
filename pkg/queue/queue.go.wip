@@ -1,0 +1,40 @@
+package queue
+
+import (
+	"context"
+	"os"
+
+	"github.com/go-redis/redis/v8"
+)
+
+type Queue struct {
+	redisClient *redis.Client
+}
+
+/* Create new job queue */
+func NewQueue() (*Queue, error) {
+	os.Setenv("REDIS_URL", "redis://localhost:7777")
+	opts, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+	if err != nil {
+		return nil, err
+	}
+	rdb := redis.NewClient(opts)
+
+	return &Queue{redisClient: rdb}, nil
+}
+
+/* Pop new job from queue, block if empty */
+func (q *Queue) Pop(ctx context.Context) (string, error) {
+	task, err := q.redisClient.BLPop(ctx, 0, "ipQuery").Result()
+	if err != nil {
+		return "", nil
+	}
+
+	return task[1], nil
+}
+
+/* Push new job into queue*/
+func (q *Queue) Push(ctx context.Context, query string) error {
+	_, err := q.redisClient.RPush(ctx, "ipQuery", query).Result()
+	return err
+}

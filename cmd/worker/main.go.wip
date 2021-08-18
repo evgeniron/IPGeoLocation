@@ -1,0 +1,88 @@
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"strconv"
+	"sync"
+
+	"github.com/evgeniron/IPGeoLocation/pkg/queue"
+)
+
+var (
+	MaxWorkers = os.Getenv("MAX_WORKERS")
+)
+
+var q *queue.Queue
+
+/* Send job to worker - blocking */
+func dispatchJob(ctx context.Context, jobQueue chan<- string) {
+	for {
+		job, err := q.Pop(ctx)
+		if err != nil {
+			log.Println("Failed to receive a job: ", err)
+			break
+		}
+
+		jobQueue <- job
+	}
+}
+
+func handleJob(ctx context.Context, job string) {
+	log.Println("Recieved job: ", job)
+}
+
+func worker(ctx context.Context, workers *sync.WaitGroup, jobQueue <-chan string, result chan<- string) {
+	defer workers.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case job := <-jobQueue:
+			handleJob(ctx, job)
+			if ctx.Err() != nil {
+				return
+			}
+		}
+	}
+
+}
+
+func main() {
+
+	maxWorkers, err := strconv.Atoi(MaxWorkers)
+	if err != nil {
+		maxWorkers = 1
+	}
+
+	/* Create new queue for jobs - ip queries */
+	if q, err = queue.NewQueue(); err != nil {
+		panic(err)
+	}
+
+	/* Make a background context */
+	ctx := context.Background()
+
+	/* Derive a context with cancel */
+	ctxWithCancel, cancel := context.WithCancel(ctx)
+
+	/* Create waitgoup to wait for multiple goroutines*/
+	var workers sync.WaitGroup
+
+	/* Create channel for worker jobs */
+	jobQueue := make(chan string)
+
+	for i := 0; i < maxWorkers; i++ {
+		workers.Add(1)
+		go worker(ctxWithCancel, &workers, jobQueue)
+	}
+
+	/* Start the dispatcher */
+	dispatchJob(ctx, jobQueue)
+
+	cancel()
+	workers.Wait()
+}

@@ -1,4 +1,4 @@
-package db
+package main
 
 import (
 	"log"
@@ -7,14 +7,13 @@ import (
 )
 
 type Config struct {
-	Path     string
-	Username string
-	Pwd      string
+	Port             string
+	MaxRequestPerSec int
 }
 
 // NewConfig creates a Config with values from environment variables.
-func NewDBConfig(prefix string) *Config {
-	c := &Config{Path: "pkg/db/geo_db.csv"}
+func NewConfig(prefix string) *Config {
+	c := &Config{Port: "8000", MaxRequestPerSec: 1}
 	if err := envconfig.Process(prefix, c); err != nil {
 		log.Fatal(err)
 	}
