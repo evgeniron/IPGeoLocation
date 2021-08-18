@@ -9,6 +9,6 @@ WORKDIR /src
 RUN CGO_ENABLED=0 go build -ldflags "-s -w" -o /server ./cmd/server
 
 FROM alpine:latest
-COPY --from=builder /src/pkg/db /pkg/db
+COPY --from=builder /src/pkg/db/geo_db.csv /pkg/db/geo_db.csv
 COPY --from=builder /server /server
 CMD ["./server", "-d"]
