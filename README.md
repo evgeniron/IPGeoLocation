@@ -1,4 +1,4 @@
 # IPGeoLocation
 ## Overview
-An excersize in building REST-API service that returns IP to country mapping.
+An exercise in building REST-API service that returns IP to country mapping.
 
